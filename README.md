@@ -19,6 +19,8 @@
 
 <p>After the stack is successfully deployed, you can upload images to the S3 bucket, and the Lambda function will automatically trigger and perform image recognition using Amazon Rekognition. The detected labels will be printed in the Lambda function's logs.</p>
 
-<img src="path/to/image1.jpg" alt="Image 1">
-<img src="path/to/image2.jpg" alt="Image 2">
+<img src="path/to/Screenshot.png" alt="Image 1">
+<img src="path/to/Screenshot1.png" alt="Image 2">
+<img src="path/to/Screenshot2.png" alt="Image 3">
+
 <!-- Add more image tags here -->
