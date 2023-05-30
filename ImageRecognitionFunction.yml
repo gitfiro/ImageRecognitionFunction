@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  BucketName:
+    Type: String
+    Description: Name of the S3 bucket to create for image uploads
+Resources:
+  ImageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 564474-custom-bucket-fun  # Modify this with your desired bucket name
+  ImageRecognitionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ImageRecognitionFunction  # Modify this with your desired function name
+      Runtime: python3.8
+      Handler: index.handler
+      Timeout: 60
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import os
+
+          rekognition = boto3.client('rekognition')
+
+          def handler(event, context):
+              # Retrieve the uploaded image object information
+              bucket_name = event['Records'][0]['s3']['bucket']['name']
+              object_key = event['Records'][0]['s3']['object']['key']
+              
+              # Perform object detection using Rekognition
+              response = rekognition.detect_labels(
+                  Image={'S3Object': {'Bucket': bucket_name, 'Name': object_key}},
+                  MaxLabels=10
+              )
+              
+              # Print the detected labels
+              for label in response['Labels']:
+                  print('Detected label: ' + label['Name'])
+  
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ImageRecognitionFunction
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub arn:aws:s3:::${BucketName}
+Outputs:
+  ImageBucketName:
+    Description: Name of the S3 bucket for image uploads
+    Value: !Ref ImageBucket
+  ImageRecognitionFunctionArn:
+    Description: ARN of the Lambda function for image recognition
+    Value: !GetAtt ImageRecognitionFunction.Arn
